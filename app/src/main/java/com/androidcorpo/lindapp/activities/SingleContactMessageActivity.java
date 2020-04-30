@@ -14,7 +14,7 @@ import android.widget.Toast;
 import com.androidcorpo.lindapp.Constant;
 import com.androidcorpo.lindapp.LindAppUtils;
 import com.androidcorpo.lindapp.R;
-import com.androidcorpo.lindapp.fragments.ContactMesagesFragment;
+import com.androidcorpo.lindapp.fragments.ContactMessagesFragment;
 import com.androidcorpo.lindapp.model.Message;
 import com.androidcorpo.lindapp.model.MessageContent;
 import com.androidcorpo.lindapp.model.MessageContent.MessageItem;
@@ -28,7 +28,7 @@ import java.util.Date;
 /**
  * Created by severin MBEKOU on 17-04-2020.
  */
-public class SingleContactMessageActivity extends AppCompatActivity implements ContactMesagesFragment.OnListFragmentInteractionListener, View.OnClickListener {
+public class SingleContactMessageActivity extends AppCompatActivity implements ContactMessagesFragment.OnListFragmentInteractionListener, View.OnClickListener {
 
     EditText message;
     Button sim1;
@@ -57,7 +57,7 @@ public class SingleContactMessageActivity extends AppCompatActivity implements C
 
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        ContactMesagesFragment fragment = new ContactMesagesFragment();
+        ContactMessagesFragment fragment = new ContactMessagesFragment();
         Bundle bundle = new Bundle();
         bundle.putString(Constant.FROM, from);
         fragment.setArguments(bundle);

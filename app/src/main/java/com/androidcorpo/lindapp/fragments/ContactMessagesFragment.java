@@ -16,23 +16,15 @@ import com.androidcorpo.lindapp.adapter.MyContactMessagesAdapter;
 import com.androidcorpo.lindapp.model.MessageContent;
 import com.androidcorpo.lindapp.model.MessageContent.MessageItem;
 
-public class ContactMesagesFragment extends Fragment {
+public class ContactMessagesFragment extends Fragment {
 
     private static final String ARG_COLUMN_COUNT = "column-count";
     private int mColumnCount = 1;
     private OnListFragmentInteractionListener mListener;
     private String from;
 
-    public ContactMesagesFragment() {
+    public ContactMessagesFragment() {
     }
-
-    /*public static ContactMesagesFragment newInstance(int columnCount) {
-        ContactMesagesFragment fragment = new ContactMesagesFragment();
-        Bundle args = new Bundle();
-        args.putInt(ARG_COLUMN_COUNT, columnCount);
-        fragment.setArguments(args);
-        return fragment;
-    }*/
 
     @Override
     public void onCreate(Bundle savedInstanceState) {

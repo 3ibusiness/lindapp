@@ -86,12 +86,12 @@ public class LindAppUtils {
         }
     }
 
-    public static String getCleanAdress(String adress) {
-        if (adress != null)
-            if (adress.length() == 9)
-                return 237 + adress;
-            else if (adress.length() > 12)
-                return adress.substring(adress.length() - 12);
+    public static String getCleanAdress(String address) {
+        if (address != null)
+            if (address.length() == 9)
+                return 237 + address;
+            else if (address.length() > 12)
+                return address.substring(address.length() - 12);
         return "";
     }
 
@@ -115,7 +115,7 @@ public class LindAppUtils {
         return contactName;
     }
 
-    public static String publicKey(String from, String to) {
+    private static String publicKey(String from, String to) {
 
         String subFrom = from.substring(from.length() - 6);
         String subTo = to.substring(to.length() - 6);
@@ -144,7 +144,7 @@ public class LindAppUtils {
         return CoreAlgorithm.decrypt(s, key);
     }
 
-    public static String getMyContact(Context context) {
+    private static String getMyContact(Context context) {
         SharedPreferences pref = context.getSharedPreferences(Constant.PREFERENCE, 0); // 0 - for private mode
 
         if (pref.contains(Constant.MY_CONTACT)) {

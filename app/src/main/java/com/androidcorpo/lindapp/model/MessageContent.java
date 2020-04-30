@@ -1,8 +1,5 @@
 package com.androidcorpo.lindapp.model;
 
-import com.androidcorpo.lindapp.model.MessageDetailContent;
-import com.androidcorpo.lindapp.model.Message;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;

@@ -13,7 +13,7 @@ import com.androidcorpo.lindapp.Constant;
 import com.androidcorpo.lindapp.LindAppUtils;
 import com.androidcorpo.lindapp.R;
 import com.androidcorpo.lindapp.elipticurve.BinaryConversions;
-import com.androidcorpo.lindapp.fragments.ContactMesagesFragment.OnListFragmentInteractionListener;
+import com.androidcorpo.lindapp.fragments.ContactMessagesFragment.OnListFragmentInteractionListener;
 import com.androidcorpo.lindapp.model.MessageContent.MessageItem;
 
 import java.text.SimpleDateFormat;

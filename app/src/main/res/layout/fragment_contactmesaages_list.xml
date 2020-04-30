@@ -13,5 +13,5 @@
     android:background="@android:color/transparent"
     android:scrollbars="vertical"
     app:layoutManager="LinearLayoutManager"
-    tools:context=".fragments.ContactMesagesFragment"
+    tools:context=".fragments.ContactMessagesFragment"
     tools:listitem="@layout/message_detail_item" />
