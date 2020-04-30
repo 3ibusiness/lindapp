@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
@@ -67,17 +68,13 @@ public class MessagesActivity extends AppCompatActivity implements MessagesFragm
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
-        switch (item.getItemId()) {
-            case R.id.action_plus:
-                Intent intent = new Intent(this, SendMessageActivity.class);
-                startActivity(intent);
-                return true;
+        /*switch (item.getItemId()) {
             case R.id.action_search:
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
-        }
-
+        }*/
+        return super.onOptionsItemSelected(item);
     }
 
     public void refreshActivity(String notifiacationTitle, String notificationMessage) {

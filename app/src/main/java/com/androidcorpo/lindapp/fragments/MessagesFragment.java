@@ -1,7 +1,9 @@
 package com.androidcorpo.lindapp.fragments;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -10,8 +12,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.androidcorpo.lindapp.adapter.MyMessagesRecyclerViewAdapter;
 import com.androidcorpo.lindapp.R;
+import com.androidcorpo.lindapp.activities.SendMessageActivity;
+import com.androidcorpo.lindapp.adapter.MyMessagesRecyclerViewAdapter;
 import com.androidcorpo.lindapp.model.MessageDetailContent;
 import com.androidcorpo.lindapp.model.MessageDetailContent.MessageDetailItem;
 
@@ -45,18 +48,29 @@ public class MessagesFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
         View view = inflater.inflate(R.layout.fragment_messages_list, container, false);
-        if (view instanceof RecyclerView) {
-            Context context = view.getContext();
-            RecyclerView recyclerView = (RecyclerView) view;
-            if (mColumnCount <= 1) {
-                recyclerView.setLayoutManager(new LinearLayoutManager(context));
-            } else {
-                recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
+        final Context context = view.getContext();
+
+        RecyclerView recyclerView = view.findViewById(R.id.list_main);
+
+        FloatingActionButton floatingActionButton = view.findViewById(R.id.fab);
+        floatingActionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(context, SendMessageActivity.class);
+                startActivity(intent);
+
             }
-            MyMessagesRecyclerViewAdapter myMessagesRecyclerViewAdapter = new MyMessagesRecyclerViewAdapter(MessageDetailContent.ITEMS, mListener, context);
-            recyclerView.setAdapter(myMessagesRecyclerViewAdapter);
+        });
+
+        if (mColumnCount <= 1) {
+            recyclerView.setLayoutManager(new LinearLayoutManager(context));
+        } else {
+            recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
         }
+        MyMessagesRecyclerViewAdapter myMessagesRecyclerViewAdapter = new MyMessagesRecyclerViewAdapter(MessageDetailContent.ITEMS, mListener, context);
+        recyclerView.setAdapter(myMessagesRecyclerViewAdapter);
         return view;
     }
 

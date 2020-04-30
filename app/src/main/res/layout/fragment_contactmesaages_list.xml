@@ -10,6 +10,7 @@
     android:layout_marginRight="5dp"
     android:fadeScrollbars="true"
     android:scrollbarStyle="outsideOverlay"
+    android:background="@android:color/transparent"
     android:scrollbars="vertical"
     app:layoutManager="LinearLayoutManager"
     tools:context=".fragments.ContactMesagesFragment"

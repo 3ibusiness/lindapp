@@ -7,7 +7,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.androidcorpo.lindapp.Constant;
@@ -34,10 +33,28 @@ public class MyContactMessagesAdapter extends RecyclerView.Adapter<MyContactMess
         this.from = from;
     }
 
+    private static final int MY_MESSAGE = 0, OTHER_MESSAGE = 1;
+
+    @Override
+    public int getItemViewType(int position) {
+        MessageItem item = mValues.get(position);
+
+        if (item.getIsRorS() != 1) return MY_MESSAGE;
+        else return OTHER_MESSAGE;
+    }
+
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_detail_item, parent, false);
-        return new ViewHolder(view);
+
+        View convertView;
+        if (viewType == MY_MESSAGE) {
+            convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_detail_item_r,
+                    null);
+        } else {
+            convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_detail_item,
+                    null);
+        }
+        return new ViewHolder(convertView);
     }
 
 
@@ -55,13 +72,13 @@ public class MyContactMessagesAdapter extends RecyclerView.Adapter<MyContactMess
         holder.time.setText(dtFormat.format(mValues.get(position).getTime()));
 
         if (mValues.get(position).getIsRorS() != 1) {
-            holder.mView.setBackgroundResource(R.color.colorPrimary);
+            holder.linearLayout.setBackgroundResource(R.color.colorPrimary);
             holder.mView.setPadding(20, 0, 0, 0);
-
+            //  holder.linearLayout.setBackground(R.drawable.chat);
         } else {
             holder.mView.setBackgroundColor(Color.WHITE);
             holder.mView.setPadding(0, 0, 20, 0);
-
+            //holder.linearLayout.setBackground(R.drawable.chat_r);
         }
         holder.mView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -83,9 +100,13 @@ public class MyContactMessagesAdapter extends RecyclerView.Adapter<MyContactMess
         public final TextView message;
         public final TextView time;
         public MessageItem mItem;
+
+        private LinearLayout linearLayout;
+
         public ViewHolder(View view) {
             super(view);
             mView = view;
+            linearLayout = view.findViewById(R.id.thumbnail);
             message = view.findViewById(R.id.message);
             time = view.findViewById(R.id.time);
         }
