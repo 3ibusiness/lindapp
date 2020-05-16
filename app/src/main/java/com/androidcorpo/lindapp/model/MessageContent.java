@@ -8,12 +8,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by severin MBEKOU on 17-04-2020.
+ * Created by Séverin MBEKOU on 17-04-2020.
  */
 public class MessageContent {
 
-    public static final List<MessageItem> ITEMS = new ArrayList<MessageItem>();
-    public static final Map<Date, MessageItem> ITEM_MAP = new HashMap<Date, MessageItem>();
+    public static final List<MessageItem> ITEMS = new ArrayList<>();
+    public static final Map<Date, MessageItem> ITEM_MAP = new HashMap<>();
 
     static {
         ITEMS.clear();

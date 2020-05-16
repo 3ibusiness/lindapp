@@ -17,14 +17,12 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.androidcorpo.lindapp.Constant;
-import com.androidcorpo.lindapp.fragments.MessagesFragment;
 import com.androidcorpo.lindapp.R;
+import com.androidcorpo.lindapp.fragments.MessagesFragment;
 import com.androidcorpo.lindapp.model.MessageDetailContent;
-import com.androidcorpo.lindapp.model.Message;
-
-import java.util.ArrayList;
 
 public class MessagesActivity extends AppCompatActivity implements MessagesFragment.OnListFragmentInteractionListener {
 
@@ -47,8 +45,19 @@ public class MessagesActivity extends AppCompatActivity implements MessagesFragm
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+
+        FloatingActionButton floatingActionButton = findViewById(R.id.fab);
+
+        floatingActionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), SendMessageActivity.class);
+                startActivity(intent);
+            }
+        });
+
         Cursor messageInboxCursor = getContentResolver().query(Uri.parse("content://sms/"), null, null, null, null);
-        MessageDetailContent.fillData(getApplicationContext(),messageInboxCursor);
+        MessageDetailContent.fillData(getApplicationContext(), messageInboxCursor);
 
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
@@ -88,7 +97,7 @@ public class MessagesActivity extends AppCompatActivity implements MessagesFragm
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private void Notify(String notifiacationTitle, String notificationMessage) {
 
-        Intent intent = new Intent(this, com.androidcorpo.lindapp.services.Notification.class);
+        Intent intent = new Intent(this, com.androidcorpo.lindapp.activities.MessagesActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);

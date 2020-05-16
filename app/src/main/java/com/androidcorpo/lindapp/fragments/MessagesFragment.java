@@ -28,13 +28,13 @@ public class MessagesFragment extends Fragment {
     public MessagesFragment() {
     }
 
-    /*public static MessagesFragment newInstance(int columnCount) {
+    public static MessagesFragment newInstance(int columnCount) {
         MessagesFragment fragment = new MessagesFragment();
         Bundle args = new Bundle();
         args.putInt(ARG_COLUMN_COUNT, columnCount);
         fragment.setArguments(args);
         return fragment;
-    }*/
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -53,16 +53,6 @@ public class MessagesFragment extends Fragment {
         final Context context = view.getContext();
 
         RecyclerView recyclerView = view.findViewById(R.id.list_main);
-
-        FloatingActionButton floatingActionButton = view.findViewById(R.id.fab);
-        floatingActionButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(context, SendMessageActivity.class);
-                startActivity(intent);
-
-            }
-        });
 
         if (mColumnCount <= 1) {
             recyclerView.setLayoutManager(new LinearLayoutManager(context));
