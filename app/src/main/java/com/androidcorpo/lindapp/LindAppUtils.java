@@ -14,22 +14,44 @@ import android.provider.ContactsContract;
 import android.telephony.SmsManager;
 import android.widget.Toast;
 
-import com.androidcorpo.lindapp.elipticurve.BinaryConversions;
-import com.androidcorpo.lindapp.elipticurve.CoreAlgorithm;
+import com.androidcorpo.lindapp.elipticurve.EEC;
+import com.androidcorpo.lindapp.network.GetOnlinePublicKey;
+import com.androidcorpo.lindapp.resources.LindAppDbHelper;
 
-import java.util.Arrays;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+
+import javax.crypto.SecretKey;
 
 public class LindAppUtils {
 
-    public static void sendCypherMessage(final Context context, String plainText, String phoneNumber) {
+    private static PublicKey getPublicKey(LindAppDbHelper lindAppDbHelper, String contact) throws IOException {
+        PublicKey publicKey = lindAppDbHelper.getPublicKey(contact);
+        if (publicKey == null) {
+            new GetOnlinePublicKey(lindAppDbHelper,publicKey).execute(contact);
+        }
+        return publicKey;
+    }
 
+    public static void sendCypherMessage(final Context context, String plainText, String destiNumber) throws IOException {
+        LindAppDbHelper lindAppDbHelper = LindAppDbHelper.getInstance(context);
+
+        String phoneNumber = getCleanAdress(destiNumber);
         String myNumber = getMyContact(context);
         if (myNumber == null) {
             Toast.makeText(context, myNumber, Toast.LENGTH_LONG).show();
         } else {
 
-            String cypherTextBin = CoreAlgorithm.crypt(plainText, publicKey(phoneNumber.replaceAll("\\s", ""), myNumber.replaceAll("\\s", "")));
-            String cypherTextHex = BinaryConversions.binToHex(cypherTextBin);
+            PrivateKey privateKey = lindAppDbHelper.getPrivateKey(myNumber);
+            PublicKey publicKey = getPublicKey(lindAppDbHelper, phoneNumber);
+            SecretKey secretKey = EEC.secretKey(privateKey, publicKey);
+
+            String cypherText = EEC.crypt(secretKey, plainText);
             String SENT = "SMS_SENT";
             String DELIVERED = "SMS_DELIVERED";
 
@@ -82,7 +104,7 @@ public class LindAppUtils {
              *
              */
             SmsManager sms = SmsManager.getDefault();
-            sms.sendTextMessage(phoneNumber, null, cypherTextHex, sentPI, deliveredPI);
+            sms.sendTextMessage(phoneNumber, null, cypherText, sentPI, deliveredPI);
         }
     }
 
@@ -90,7 +112,7 @@ public class LindAppUtils {
         if (address != null)
             if (address.length() == 9)
                 return 237 + address;
-            else if (address.length() > 12)
+            else if (address.length() >= 12)
                 return address.substring(address.length() - 12);
         return "";
     }
@@ -115,33 +137,19 @@ public class LindAppUtils {
         return contactName;
     }
 
-    private static String publicKey(String from, String to) {
+    public static String decryptCypherText(Context context, String msg, String from) throws IOException {
 
-        String subFrom = from.substring(from.length() - 6);
-        String subTo = to.substring(to.length() - 6);
-
-        String values = subFrom + "" + subTo;
-
-        String[] array = values.split("");
-        Arrays.sort(array);
-
-        StringBuilder sb = new StringBuilder();
-        for (String ch : array) {
-            sb.append(ch);
-        }
-
-        String string = sb.toString();
-        return string.substring(0, 3) + "" + string.substring(string.length() - 3, string.length());
-    }
-
-    public static String decryptCypherText(Context context, String msg, String phoneNumber) {
-        String s = BinaryConversions.hexToBin(msg);
         String myNumber = getMyContact(context);
+        LindAppDbHelper lindAppDbHelper = LindAppDbHelper.getInstance(context);
+        PrivateKey privateKey = lindAppDbHelper.getPrivateKey(myNumber);
 
-        assert myNumber != null;
-        String key = publicKey(phoneNumber.replaceAll("\\s", ""), myNumber.replaceAll("\\s", ""));
+        String phoneNumber = getCleanAdress(from);
+        PublicKey publicKey = getPublicKey(lindAppDbHelper, phoneNumber);
 
-        return CoreAlgorithm.decrypt(s, key);
+        SecretKey secretKey = EEC.secretKey(privateKey, publicKey);
+
+        assert secretKey != null;
+        return EEC.decrypt(secretKey, msg);
     }
 
     private static String getMyContact(Context context) {
@@ -151,6 +159,114 @@ public class LindAppUtils {
             return pref.getString(Constant.MY_CONTACT, "");
         } else return null;
 
+    }
+
+
+    /**
+     * To de-serialize a java object from database
+     *
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    public static PrivateKey deSerializePrivateKey(byte[] buf) throws IOException {
+
+        ObjectInputStream objectIn = null;
+        PrivateKey privateKey = null;
+        if (buf != null)
+            objectIn = new ObjectInputStream(new ByteArrayInputStream(buf));
+
+        try {
+            privateKey = (PrivateKey) objectIn.readObject();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return privateKey;
+    }
+
+    /**
+     * To de-serialize a java object from database
+     *
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    public static PublicKey deSerializePublicKey(byte[] buf) throws IOException {
+
+        ObjectInputStream objectIn = null;
+        PublicKey publicKey = null;
+        if (buf != null)
+            objectIn = new ObjectInputStream(new ByteArrayInputStream(buf));
+
+        try {
+            publicKey = (PublicKey) objectIn.readObject();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return publicKey;
+    }
+
+
+    public static byte[] privateKeyToStream(PrivateKey stu) {
+        // Reference for stream of bytes
+        byte[] stream = null;
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(stu);
+            stream = baos.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return stream;
+
+    }
+
+
+    public static String convertBytesToHex(byte[] bytes) {
+
+        StringBuilder result = new StringBuilder();
+
+        for (byte temp : bytes) {
+
+            int decimal = (int) temp & 0xff;  // bytes widen to int, need mask, prevent sign extension
+
+            String hex = Integer.toHexString(decimal);
+
+            result.append(hex);
+
+        }
+        return result.toString();
+
+
+    }
+
+    public static byte[] hexStringToByteArray(String s) {
+        int len = s.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                    + Character.digit(s.charAt(i+1), 16));
+        }
+        return data;
+    }
+
+
+    public static byte[] publicKeyToStream(PublicKey stu) {
+        // Reference for stream of bytes
+        byte[] stream = null;
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(stu);
+            stream = baos.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return stream;
     }
 
 }

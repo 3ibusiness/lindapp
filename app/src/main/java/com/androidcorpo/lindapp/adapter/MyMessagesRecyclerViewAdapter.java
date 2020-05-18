@@ -8,9 +8,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.androidcorpo.lindapp.Constant;
-import com.androidcorpo.lindapp.LindAppUtils;
 import com.androidcorpo.lindapp.R;
-import com.androidcorpo.lindapp.elipticurve.BinaryConversions;
 import com.androidcorpo.lindapp.fragments.MessagesFragment.OnListFragmentInteractionListener;
 import com.androidcorpo.lindapp.model.MessageDetailContent.MessageDetailItem;
 
@@ -21,11 +19,10 @@ public class MyMessagesRecyclerViewAdapter extends RecyclerView.Adapter<MyMessag
 
     private final List<MessageDetailItem> mValues;
     private final OnListFragmentInteractionListener mListener;
-    private Context context;
+
     public MyMessagesRecyclerViewAdapter(List<MessageDetailItem> items, OnListFragmentInteractionListener listener,Context context) {
         mValues = items;
         mListener = listener;
-        this.context = context;
     }
 
     @Override
@@ -44,8 +41,10 @@ public class MyMessagesRecyclerViewAdapter extends RecyclerView.Adapter<MyMessag
         holder.name.setText(displayName);
         String msg = mValues.get(position).getLatestMessage();
         String from = mValues.get(position).getNumberName();
+/*
         if (BinaryConversions.isHexNumber(msg))
             msg = LindAppUtils.decryptCypherText(context,msg,from);
+*/
         holder.latest_message.setText(msg);
         holder.list_image.setText(displayName.charAt(0) + "");
         holder.time.setText(dtFormat.format(mValues.get(position).getTime()));

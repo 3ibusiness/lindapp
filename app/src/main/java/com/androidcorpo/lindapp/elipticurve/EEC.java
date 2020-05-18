@@ -49,17 +49,14 @@ public class EEC {
     }
 
     //Génération des clés secrètes
-    public static SecretKey cleSecretes(PrivateKey d, PublicKey q) {
+    public static SecretKey secretKey(PrivateKey d, PublicKey q) {
         try {
 
             KeyAgreement accordCles = KeyAgreement.getInstance("ECDH", new org.bouncycastle.jce.provider.BouncyCastleProvider());
-
             accordCles.init(d);
             accordCles.doPhase(q, true);
 
-            SecretKey cle = accordCles.generateSecret("AES");
-
-            return cle;
+            return accordCles.generateSecret("AES");
 
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
             // TODO Auto-generated catch block
@@ -69,7 +66,7 @@ public class EEC {
     }
 
     // Fonction de chiffrement
-    public static String chiffrement(SecretKey cleSecrete, String texteAchifrer) {
+    public static String crypt(SecretKey cleSecrete, String texteAchifrer) {
         try {
             IvParameterSpec seed = new IvParameterSpec(iv);
             Cipher chiffreur = Cipher.getInstance("AES/GCM/NoPadding", new org.bouncycastle.jce.provider.BouncyCastleProvider());
@@ -96,7 +93,7 @@ public class EEC {
         }
     }
 
-    public static String dechiffrement(SecretKey cleSecrete, String textChiffre) {
+    public static String decrypt(SecretKey cleSecrete, String textChiffre) {
         try {
             Key cleDechiffrement = new SecretKeySpec(cleSecrete.getEncoded(), cleSecrete.getAlgorithm());
 
@@ -124,12 +121,10 @@ public class EEC {
         }
     }
 
-
     /*
     Fonctions helper de conversion de bytes en hexadécimal
     */
-
-    public static String bytesToHex(byte[] data, int length) {
+    private static String bytesToHex(byte[] data, int length) {
         String digits = "0123456789ABCDEF";
         StringBuffer buffer = new StringBuffer();
 
@@ -157,4 +152,7 @@ public class EEC {
         return data;
     }
 
+    public static boolean isHexNumber (String hexString) {
+        return  hexString.matches("[0-9A-F]+");
+    }
 }

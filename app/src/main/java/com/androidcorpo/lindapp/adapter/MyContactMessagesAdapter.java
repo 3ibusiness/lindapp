@@ -12,10 +12,11 @@ import android.widget.TextView;
 import com.androidcorpo.lindapp.Constant;
 import com.androidcorpo.lindapp.LindAppUtils;
 import com.androidcorpo.lindapp.R;
-import com.androidcorpo.lindapp.elipticurve.BinaryConversions;
+import com.androidcorpo.lindapp.elipticurve.EEC;
 import com.androidcorpo.lindapp.fragments.ContactMessagesFragment.OnListFragmentInteractionListener;
 import com.androidcorpo.lindapp.model.MessageContent.MessageItem;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
@@ -66,8 +67,13 @@ public class MyContactMessagesAdapter extends RecyclerView.Adapter<MyContactMess
         //MessageItem messageItem = mValues.get(position);
         String msg = mValues.get(position).getMessage();
 
-        if (BinaryConversions.isHexNumber(msg))
-            msg = LindAppUtils.decryptCypherText(context, msg, from);
+        if (EEC.isHexNumber(msg)) {
+            try {
+                msg = LindAppUtils.decryptCypherText(context, msg, from);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         holder.message.setText(msg);
         holder.time.setText(dtFormat.format(mValues.get(position).getTime()));
 

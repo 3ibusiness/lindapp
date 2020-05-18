@@ -1,6 +1,5 @@
 package com.androidcorpo.lindapp.activities;
 
-import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -15,6 +14,8 @@ import android.widget.ImageButton;
 
 import com.androidcorpo.lindapp.LindAppUtils;
 import com.androidcorpo.lindapp.R;
+
+import java.io.IOException;
 
 /**
  * Created by severin MBEKOU on 17-04-2020.
@@ -55,7 +56,11 @@ public class SendMessageActivity extends AppCompatActivity {
                     String plainText = message.getText().toString();
                     String phoneNumber = number.getText().toString();
 
-                    LindAppUtils.sendCypherMessage(getApplicationContext(), plainText, phoneNumber);
+                    try {
+                        LindAppUtils.sendCypherMessage(getApplicationContext(), plainText, phoneNumber);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
 
                     Intent intent = new Intent(getApplicationContext(), MessagesActivity.class);
                     finish();

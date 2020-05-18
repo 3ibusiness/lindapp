@@ -1,7 +1,9 @@
 package com.androidcorpo.lindapp;
 
 import android.net.Uri;
-import android.util.Log;
+
+import com.androidcorpo.lindapp.elipticurve.EEC;
+import com.androidcorpo.lindapp.model.MyKey;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,22 +19,16 @@ public final class NetworkUtils {
 
     private static final String TAG = NetworkUtils.class.getSimpleName();
 
-    private static final String BASE_ENDPOINT = "192.168.8.11";
+    private static final String BASE_ENDPOINT = "http://192.168.8.101";
     private static final String QUERY_PARAM_CONTACT = "contact";
     private static final String QUERY_PARAM_PUBLIC_KEY = "public_key";
 
+    public static URL postPublicKey(MyKey key) {
+        byte[] bytes = LindAppUtils.publicKeyToStream(key.getPublicKey());
 
-    /**
-     * Builds the URL used to handle public key  server using contact.
-     *
-     * @param contact The current contact will be queried for key.
-     * @param publicKey The public_key that will be use by the other.
-     * @return The URL to post query the public key.
-     */
-    public static URL postPublicKey(String contact,String publicKey) {
-        Uri builtUri = Uri.parse(BASE_ENDPOINT+"/lindapp/create.php").buildUpon()
-                .appendQueryParameter(QUERY_PARAM_CONTACT, contact)
-                .appendQueryParameter(QUERY_PARAM_PUBLIC_KEY, publicKey)
+        Uri builtUri = Uri.parse(BASE_ENDPOINT + "/lindapp/create.php").buildUpon()
+                .appendQueryParameter(QUERY_PARAM_CONTACT, key.getContact())
+                .appendQueryParameter(QUERY_PARAM_PUBLIC_KEY, EEC.bytesToHex(bytes))
                 .build();
 
         URL url = null;
@@ -45,8 +41,6 @@ public final class NetworkUtils {
         return url;
     }
 
-
-
     /**
      * Builds the URL to retrieve public key of user
      * on the query capabilities of the weather provider that we are using.
@@ -54,20 +48,19 @@ public final class NetworkUtils {
      * @param contact The contact that we queried for key.
      * @return The URL to use to retrieve public key.
      */
-    public static URL buildNewsUrl(String contact) {
-
+    public static URL buildGetPublicKeyUrl(String contact) {
+        Uri builtUri = Uri.parse(BASE_ENDPOINT + "/lindapp/read.php").buildUpon()
+                .appendQueryParameter(QUERY_PARAM_CONTACT, contact)
+                .build();
         URL url = null;
         try {
-            url = new URL(contact);
+            url = new URL(builtUri.toString());
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
 
-        Log.v(TAG, "Built URI " + url);
-
         return url;
     }
-
 
     /**
      * This method returns the entire result from the HTTP response.

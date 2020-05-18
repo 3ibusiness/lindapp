@@ -11,16 +11,17 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import com.androidcorpo.lindapp.Constant;
+import com.androidcorpo.lindapp.LindAppUtils;
 import com.androidcorpo.lindapp.R;
 import com.androidcorpo.lindapp.elipticurve.EEC;
 import com.androidcorpo.lindapp.model.MyKey;
+import com.androidcorpo.lindapp.network.PostOnlinePublicKey;
+import com.androidcorpo.lindapp.resources.LindAppDbHelper;
 
+import java.io.IOException;
 import java.security.KeyPair;
-
-import javax.crypto.SecretKey;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -28,18 +29,17 @@ public class MainActivity extends AppCompatActivity {
     private Handler progressBarbHandler = new Handler();
     private String myNumber;
     private SharedPreferences pref;
+    private LindAppDbHelper lindAppDbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         pref = getApplicationContext().getSharedPreferences(Constant.PREFERENCE, 0); // 0 - for private mode
         setContentView(R.layout.activity_main);
         LinearLayout linearLayout = findViewById(R.id.linear);
         final ProgressBar pb = findViewById(R.id.progressBar);
-
-        final KeyPair keyPair = EEC.keyGeneration();
+        lindAppDbHelper = LindAppDbHelper.getInstance(this);
 
         if (pref.contains(Constant.MY_CONTACT)) {
             linearLayout.setVisibility(View.GONE);
@@ -56,13 +56,32 @@ public class MainActivity extends AppCompatActivity {
 
                     myNumber = editText.getText().toString();
 
-                    MyKey myKey = new MyKey(myNumber,keyPair.getPublic().toString());
+                    String cleanNumber = LindAppUtils.getCleanAdress(myNumber);
 
-                    if (myNumber.isEmpty() || myNumber.length() < 8) {
+                    if (cleanNumber.isEmpty() || cleanNumber.length() < 8) {
                         editText.setError("Please enter you number");
                     } else {
+                        MyKey savedKey = null;
+                        try {
+                            savedKey = lindAppDbHelper.findByContact(cleanNumber);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        if (savedKey == null) {
+                            KeyPair keyPair = EEC.keyGeneration();
+                            MyKey myKey = new MyKey(cleanNumber, keyPair.getPrivate(), keyPair.getPublic());
+                            try {
+                                lindAppDbHelper.saveKey(myKey);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            //DatatypeConverter.printBase64Binary(bytes);
+                            new PostOnlinePublicKey().execute(myKey);
 
-                        savePreference(myNumber);
+                        }
+                        savePreference(cleanNumber);
+
+                        // new GetOnlinePublicKey(lindAppDbHelper).execute("237677925286");
                         pb.setVisibility(View.VISIBLE);
                         animateProgressBar(pb);
                     }
@@ -70,8 +89,6 @@ public class MainActivity extends AppCompatActivity {
             });
 
         }
-
-        //TODO verify esustance of key here
 
     }
 

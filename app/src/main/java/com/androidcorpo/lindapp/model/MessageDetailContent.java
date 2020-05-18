@@ -1,10 +1,7 @@
 package com.androidcorpo.lindapp.model;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
-import android.net.Uri;
-import android.provider.ContactsContract;
 
 import com.androidcorpo.lindapp.LindAppUtils;
 

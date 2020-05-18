@@ -20,6 +20,7 @@ import com.androidcorpo.lindapp.model.MessageContent;
 import com.androidcorpo.lindapp.model.MessageContent.MessageItem;
 import com.androidcorpo.lindapp.model.MessageDetailContent;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -89,7 +90,11 @@ public class SingleContactMessageActivity extends AppCompatActivity implements C
             String plainText = message.getText().toString();
             String phoneNumber = dc.getNumberName();
 
-            LindAppUtils.sendCypherMessage(getApplicationContext(), plainText, phoneNumber);
+            try {
+                LindAppUtils.sendCypherMessage(getApplicationContext(), plainText, phoneNumber);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
             Message message = null;
             try {

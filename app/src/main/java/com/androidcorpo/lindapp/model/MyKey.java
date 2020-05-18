@@ -1,20 +1,23 @@
 package com.androidcorpo.lindapp.model;
 
+import java.security.PrivateKey;
+import java.security.PublicKey;
+
 public class MyKey {
 
     private long ID;
 
     private String contact;
-    private String publicKey;
-    private String privateKey;
+    private PublicKey publicKey;
+    private PrivateKey privateKey;
 
-    public MyKey(String contact, String privateKey, String publicKey) {
+    public MyKey(String contact, PrivateKey privateKey, PublicKey publicKey) {
         this.contact = contact;
         this.publicKey = publicKey;
         this.privateKey = privateKey;
     }
 
-    public MyKey(String contact, String publicKey) {
+    public MyKey(String contact, PublicKey publicKey) {
         this.contact = contact;
         this.publicKey = publicKey;
     }
@@ -22,11 +25,11 @@ public class MyKey {
     public MyKey() {
     }
 
-    public String getPrivateKey() {
+    public PrivateKey getPrivateKey() {
         return privateKey;
     }
 
-    public void setPrivateKey(String privateKey) {
+    public void setPrivateKey(PrivateKey privateKey) {
         this.privateKey = privateKey;
     }
 
@@ -38,11 +41,11 @@ public class MyKey {
         this.contact = contact;
     }
 
-    public String getPublicKey() {
+    public PublicKey getPublicKey() {
         return publicKey;
     }
 
-    public void setPublicKey(String publicKey) {
+    public void setPublicKey(PublicKey publicKey) {
         this.publicKey = publicKey;
     }
 

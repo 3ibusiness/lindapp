@@ -1,9 +1,7 @@
 package com.androidcorpo.lindapp.fragments;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -13,7 +11,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.androidcorpo.lindapp.R;
-import com.androidcorpo.lindapp.activities.SendMessageActivity;
 import com.androidcorpo.lindapp.adapter.MyMessagesRecyclerViewAdapter;
 import com.androidcorpo.lindapp.model.MessageDetailContent;
 import com.androidcorpo.lindapp.model.MessageDetailContent.MessageDetailItem;
