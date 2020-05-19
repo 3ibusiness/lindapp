@@ -15,7 +15,10 @@ import android.telephony.SmsManager;
 import android.widget.Toast;
 
 import com.androidcorpo.lindapp.elipticurve.EEC;
-import com.androidcorpo.lindapp.network.GetOnlinePublicKey;
+import com.androidcorpo.lindapp.model.MyKey;
+import com.androidcorpo.lindapp.network.ApiClient;
+import com.androidcorpo.lindapp.network.ApiInterface;
+import com.androidcorpo.lindapp.network.response.PublicKeyResponse;
 import com.androidcorpo.lindapp.resources.LindAppDbHelper;
 
 import java.io.ByteArrayInputStream;
@@ -28,14 +31,46 @@ import java.security.PublicKey;
 
 import javax.crypto.SecretKey;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class LindAppUtils {
 
-    private static PublicKey getPublicKey(LindAppDbHelper lindAppDbHelper, String contact) throws IOException {
-        PublicKey publicKey = lindAppDbHelper.getPublicKey(contact);
-        if (publicKey == null) {
-            new GetOnlinePublicKey(lindAppDbHelper,publicKey).execute(contact);
-        }
-        return publicKey;
+    private static void readPublicKey(final LindAppDbHelper lindAppDbHelper, final String contact, final Context context) {
+
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<PublicKeyResponse> call = apiService.read(contact);
+
+        call.enqueue(new Callback<PublicKeyResponse>() {
+            @Override
+            public void onResponse(Call<PublicKeyResponse> call, Response<PublicKeyResponse> response) {
+                PublicKeyResponse keyResponse = response.body();
+                if (response.isSuccessful() && keyResponse.getCode() == 200) {
+                    String responseContact = keyResponse.getContact();
+                    String responsePublicKey = keyResponse.getPublicKey();
+                    byte[] bytes = EEC.hexToBytes(responsePublicKey);
+                    PublicKey publicKey = null;
+                    try {
+                        publicKey = LindAppUtils.deSerializePublicKey(bytes);
+                        MyKey myKey = new MyKey(responseContact, publicKey);
+                        lindAppDbHelper.saveKey(myKey);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    Toast.makeText(context,"Public Key save ",Toast.LENGTH_LONG).show();
+                }else if(keyResponse.getCode() == 404){
+                    Toast.makeText(context,contact+" doesn't post is Public Key ",Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<PublicKeyResponse> call, Throwable t) {
+
+                Toast.makeText(context,"Network issue try again later ",Toast.LENGTH_LONG).show();
+            }
+        });
+
     }
 
     public static void sendCypherMessage(final Context context, String plainText, String destiNumber) throws IOException {
@@ -47,64 +82,68 @@ public class LindAppUtils {
             Toast.makeText(context, myNumber, Toast.LENGTH_LONG).show();
         } else {
 
-            PrivateKey privateKey = lindAppDbHelper.getPrivateKey(myNumber);
-            PublicKey publicKey = getPublicKey(lindAppDbHelper, phoneNumber);
-            SecretKey secretKey = EEC.secretKey(privateKey, publicKey);
+            PublicKey publicKey = lindAppDbHelper.getPublicKey(phoneNumber);
 
-            String cypherText = EEC.crypt(secretKey, plainText);
-            String SENT = "SMS_SENT";
-            String DELIVERED = "SMS_DELIVERED";
+            if (publicKey != null) {
+                PrivateKey privateKey = lindAppDbHelper.getPrivateKey(myNumber);
+                SecretKey secretKey = EEC.secretKey(privateKey, publicKey);
 
-            PendingIntent sentPI = PendingIntent.getBroadcast(context, 0, new Intent(SENT), 0);
+                String cypherText = EEC.crypt(secretKey, plainText);
+                String SENT = "SMS_SENT";
+                String DELIVERED = "SMS_DELIVERED";
 
-            PendingIntent deliveredPI = PendingIntent.getBroadcast(context, 0, new Intent(DELIVERED), 0);
+                PendingIntent sentPI = PendingIntent.getBroadcast(context, 0, new Intent(SENT), 0);
 
-            //---when the SMS has been sent---
-            context.registerReceiver(new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context arg0, Intent arg1) {
-                    switch (getResultCode()) {
-                        case Activity.RESULT_OK:
-                            Toast.makeText(context, "SMS sent", Toast.LENGTH_SHORT).show();
-                            break;
-                        case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
-                            Toast.makeText(context, "Generic failure", Toast.LENGTH_SHORT).show();
-                            break;
-                        case SmsManager.RESULT_ERROR_NO_SERVICE:
-                            Toast.makeText(context, "No service", Toast.LENGTH_SHORT).show();
-                            break;
-                        case SmsManager.RESULT_ERROR_NULL_PDU:
-                            Toast.makeText(context, "Null PDU", Toast.LENGTH_SHORT).show();
-                            break;
-                        case SmsManager.RESULT_ERROR_RADIO_OFF:
-                            Toast.makeText(context, "Radio off", Toast.LENGTH_SHORT).show();
-                            break;
+                PendingIntent deliveredPI = PendingIntent.getBroadcast(context, 0, new Intent(DELIVERED), 0);
+
+                //---when the SMS has been sent---
+                context.registerReceiver(new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context arg0, Intent arg1) {
+                        switch (getResultCode()) {
+                            case Activity.RESULT_OK:
+                                Toast.makeText(context, "SMS sent", Toast.LENGTH_SHORT).show();
+                                break;
+                            case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
+                                Toast.makeText(context, "Generic failure", Toast.LENGTH_SHORT).show();
+                                break;
+                            case SmsManager.RESULT_ERROR_NO_SERVICE:
+                                Toast.makeText(context, "No service", Toast.LENGTH_SHORT).show();
+                                break;
+                            case SmsManager.RESULT_ERROR_NULL_PDU:
+                                Toast.makeText(context, "Null PDU", Toast.LENGTH_SHORT).show();
+                                break;
+                            case SmsManager.RESULT_ERROR_RADIO_OFF:
+                                Toast.makeText(context, "Radio off", Toast.LENGTH_SHORT).show();
+                                break;
+                        }
                     }
-                }
-            }, new IntentFilter(SENT));
+                }, new IntentFilter(SENT));
 
-            //---when the SMS has been delivered---
-            context.registerReceiver(new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context arg0, Intent arg1) {
-                    switch (getResultCode()) {
-                        case Activity.RESULT_OK:
-                            Toast.makeText(context, "SMS delivered", Toast.LENGTH_SHORT).show();
-                            break;
-                        case Activity.RESULT_CANCELED:
-                            Toast.makeText(context, "SMS not delivered", Toast.LENGTH_SHORT).show();
-                            break;
+                //---when the SMS has been delivered---
+                context.registerReceiver(new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context arg0, Intent arg1) {
+                        switch (getResultCode()) {
+                            case Activity.RESULT_OK:
+                                Toast.makeText(context, "SMS delivered", Toast.LENGTH_SHORT).show();
+                                break;
+                            case Activity.RESULT_CANCELED:
+                                Toast.makeText(context, "SMS not delivered", Toast.LENGTH_SHORT).show();
+                                break;
+                        }
                     }
-                }
-            }, new IntentFilter(DELIVERED));
+                }, new IntentFilter(DELIVERED));
 
-            /*
-             * These two lines below actually send the message via an intent.
-             * The default provider does not show up and this is backward compatible to 2.3.3
-             *
-             */
-            SmsManager sms = SmsManager.getDefault();
-            sms.sendTextMessage(phoneNumber, null, cypherText, sentPI, deliveredPI);
+                /*
+                 * These two lines below actually send the message via an intent.
+                 * The default provider does not show up and this is backward compatible to 2.3.3
+                 *
+                 */
+                SmsManager sms = SmsManager.getDefault();
+                sms.sendTextMessage(phoneNumber, null, cypherText, sentPI, deliveredPI);
+            } else
+                readPublicKey(lindAppDbHelper, phoneNumber,context);
         }
     }
 
@@ -139,17 +178,23 @@ public class LindAppUtils {
 
     public static String decryptCypherText(Context context, String msg, String from) throws IOException {
 
-        String myNumber = getMyContact(context);
         LindAppDbHelper lindAppDbHelper = LindAppDbHelper.getInstance(context);
-        PrivateKey privateKey = lindAppDbHelper.getPrivateKey(myNumber);
 
         String phoneNumber = getCleanAdress(from);
-        PublicKey publicKey = getPublicKey(lindAppDbHelper, phoneNumber);
+        PublicKey publicKey = lindAppDbHelper.getPublicKey(phoneNumber);
 
-        SecretKey secretKey = EEC.secretKey(privateKey, publicKey);
+        if (publicKey != null) {
+            String myNumber = getMyContact(context);
+            PrivateKey privateKey = lindAppDbHelper.getPrivateKey(myNumber);
 
-        assert secretKey != null;
-        return EEC.decrypt(secretKey, msg);
+            SecretKey secretKey = EEC.secretKey(privateKey, publicKey);
+
+            assert secretKey != null;
+            String decrypt = EEC.decrypt(secretKey, msg);
+            return decrypt!=null?decrypt:"error decryption";
+        } else
+            readPublicKey(lindAppDbHelper, phoneNumber,context);
+        return "Error fetching public key try again";
     }
 
     private static String getMyContact(Context context) {
@@ -224,36 +269,6 @@ public class LindAppUtils {
         return stream;
 
     }
-
-
-    public static String convertBytesToHex(byte[] bytes) {
-
-        StringBuilder result = new StringBuilder();
-
-        for (byte temp : bytes) {
-
-            int decimal = (int) temp & 0xff;  // bytes widen to int, need mask, prevent sign extension
-
-            String hex = Integer.toHexString(decimal);
-
-            result.append(hex);
-
-        }
-        return result.toString();
-
-
-    }
-
-    public static byte[] hexStringToByteArray(String s) {
-        int len = s.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i+1), 16));
-        }
-        return data;
-    }
-
 
     public static byte[] publicKeyToStream(PublicKey stu) {
         // Reference for stream of bytes

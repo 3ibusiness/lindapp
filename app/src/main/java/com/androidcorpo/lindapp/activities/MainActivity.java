@@ -1,5 +1,6 @@
 package com.androidcorpo.lindapp.activities;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -11,17 +12,24 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.androidcorpo.lindapp.Constant;
 import com.androidcorpo.lindapp.LindAppUtils;
 import com.androidcorpo.lindapp.R;
 import com.androidcorpo.lindapp.elipticurve.EEC;
 import com.androidcorpo.lindapp.model.MyKey;
-import com.androidcorpo.lindapp.network.PostOnlinePublicKey;
+import com.androidcorpo.lindapp.network.ApiClient;
+import com.androidcorpo.lindapp.network.ApiInterface;
+import com.androidcorpo.lindapp.network.response.PublicKeyResponse;
 import com.androidcorpo.lindapp.resources.LindAppDbHelper;
 
 import java.io.IOException;
 import java.security.KeyPair;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -30,15 +38,18 @@ public class MainActivity extends AppCompatActivity {
     private String myNumber;
     private SharedPreferences pref;
     private LindAppDbHelper lindAppDbHelper;
+    private ProgressBar pb;
+    private Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         pref = getApplicationContext().getSharedPreferences(Constant.PREFERENCE, 0); // 0 - for private mode
+        context = this;
         setContentView(R.layout.activity_main);
         LinearLayout linearLayout = findViewById(R.id.linear);
-        final ProgressBar pb = findViewById(R.id.progressBar);
+        pb = findViewById(R.id.progressBar);
         lindAppDbHelper = LindAppDbHelper.getInstance(this);
 
         if (pref.contains(Constant.MY_CONTACT)) {
@@ -75,15 +86,9 @@ public class MainActivity extends AppCompatActivity {
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
-                            //DatatypeConverter.printBase64Binary(bytes);
-                            new PostOnlinePublicKey().execute(myKey);
-
+                            postPublicKey(myKey);
                         }
-                        savePreference(cleanNumber);
 
-                        // new GetOnlinePublicKey(lindAppDbHelper).execute("237677925286");
-                        pb.setVisibility(View.VISIBLE);
-                        animateProgressBar(pb);
                     }
                 }
             });
@@ -119,17 +124,52 @@ public class MainActivity extends AppCompatActivity {
                     }
                     finish();
 
-                    Intent i = new Intent(MainActivity.this, MessagesActivity.class);
+                    Intent i = new Intent(context, MessagesActivity.class);
                     startActivity(i);
                 }
             }
         }).start();
     }
 
-    private void savePreference(String myContact) {
+    private void postPublicKey(final MyKey key) {
 
+        pb.setVisibility(View.VISIBLE);
+        pb.setIndeterminate(true);
+
+        byte[] bytes = LindAppUtils.publicKeyToStream(key.getPublicKey());
+
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+
+        Call<PublicKeyResponse> call = apiService.create(key.getContact(), EEC.bytesToHex(bytes));
+
+        call.enqueue(new Callback<PublicKeyResponse>() {
+            @Override
+            public void onResponse(Call<PublicKeyResponse> call, Response<PublicKeyResponse> response) {
+                pb.setIndeterminate(false);
+                pb.setVisibility(View.INVISIBLE);
+                PublicKeyResponse keyResponse = response.body();
+
+                if (response.isSuccessful() && keyResponse.getCode() == 200) {
+                    savePreference(key.getContact());
+                    Toast.makeText(context," public key shared ok!!", Toast.LENGTH_LONG).show();
+                    Intent i = new Intent(context, MessagesActivity.class);
+                    context.startActivity(i);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<PublicKeyResponse> call, Throwable t) {
+                pb.setIndeterminate(false);
+                pb.setVisibility(View.INVISIBLE);
+                Toast.makeText(context," Failed to post public key make sure you are connected", Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void savePreference(String myContact) {
         SharedPreferences.Editor editor = pref.edit();
         editor.putString(Constant.MY_CONTACT, myContact);
         editor.apply();
     }
+
 }

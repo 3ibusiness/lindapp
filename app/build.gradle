@@ -30,4 +30,10 @@ dependencies {
     androidTestImplementation 'junit:junit:4.12'
     implementation 'me.himanshusoni.chatmessageview:chat-message-view:1.0.7'
     implementation files('libs/bcprov-jdk15to18-165.jar')
+
+    //Rest With Retrofit
+    implementation 'com.squareup.retrofit2:retrofit:2.2.0'
+    implementation 'com.squareup.okhttp:okhttp:2.4.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.2.0'
+
 }
