@@ -40,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     private LindAppDbHelper lindAppDbHelper;
     private ProgressBar pb;
     private Context context;
+    private LinearLayout loginForm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,18 +49,18 @@ public class MainActivity extends AppCompatActivity {
         pref = getApplicationContext().getSharedPreferences(Constant.PREFERENCE, 0); // 0 - for private mode
         context = this;
         setContentView(R.layout.activity_main);
-        LinearLayout linearLayout = findViewById(R.id.linear);
+        loginForm = findViewById(R.id.linear);
         pb = findViewById(R.id.progressBar);
         lindAppDbHelper = LindAppDbHelper.getInstance(this);
+        Button button = findViewById(R.id.save_contact);
+        final EditText editText = findViewById(R.id.my_contact);
 
         if (pref.contains(Constant.MY_CONTACT)) {
-            linearLayout.setVisibility(View.GONE);
+            loginForm.setVisibility(View.GONE);
             animateProgressBar(pb);
         } else {
-            linearLayout.setVisibility(View.VISIBLE);
             pb.setVisibility(View.GONE);
-            Button button = findViewById(R.id.save_contact);
-            final EditText editText = findViewById(R.id.my_contact);
+            loginForm.setVisibility(View.VISIBLE);
             button.setOnClickListener(new View.OnClickListener() {
 
                 @Override
@@ -151,17 +152,19 @@ public class MainActivity extends AppCompatActivity {
 
                 if (response.isSuccessful() && keyResponse.getCode() == 200) {
                     savePreference(key.getContact());
-                    Toast.makeText(context," public key shared ok!!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(context, " public key shared ok!!", Toast.LENGTH_LONG).show();
+                    finish();
                     Intent i = new Intent(context, MessagesActivity.class);
                     context.startActivity(i);
-                }
+                } else
+                    Toast.makeText(context, " Request post fail -- Public Key -- ", Toast.LENGTH_LONG).show();
             }
 
             @Override
             public void onFailure(Call<PublicKeyResponse> call, Throwable t) {
-                pb.setIndeterminate(false);
+                Toast.makeText(context, " Failed to post public key make sure you are connected", Toast.LENGTH_LONG).show();
+                loginForm.setVisibility(View.VISIBLE);
                 pb.setVisibility(View.INVISIBLE);
-                Toast.makeText(context," Failed to post public key make sure you are connected", Toast.LENGTH_LONG).show();
             }
         });
     }
