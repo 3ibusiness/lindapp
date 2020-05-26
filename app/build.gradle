@@ -6,10 +6,10 @@ android {
 
     defaultConfig {
         applicationId "com.androidcorpo.lindapp"
-        minSdkVersion 16
+        minSdkVersion 19
         targetSdkVersion 28
-        versionCode 5
-        versionName "1.5"
+        versionCode 6
+        versionName "1.5 - final"
     }
     buildTypes {
         release {

@@ -1,5 +1,6 @@
 package com.androidcorpo.lindapp.activities;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -41,6 +42,8 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar pb;
     private Context context;
     private LinearLayout loginForm;
+    private Button button;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,11 +51,12 @@ public class MainActivity extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         pref = getApplicationContext().getSharedPreferences(Constant.PREFERENCE, 0); // 0 - for private mode
         context = this;
+
         setContentView(R.layout.activity_main);
         loginForm = findViewById(R.id.linear);
         pb = findViewById(R.id.progressBar);
         lindAppDbHelper = LindAppDbHelper.getInstance(this);
-        Button button = findViewById(R.id.save_contact);
+        button = findViewById(R.id.save_contact);
         final EditText editText = findViewById(R.id.my_contact);
 
         if (pref.contains(Constant.MY_CONTACT)) {
@@ -70,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
 
                     String cleanNumber = LindAppUtils.getCleanAdress(myNumber);
 
-                    if (cleanNumber.isEmpty() || cleanNumber.length() < 8) {
+                    if (cleanNumber.isEmpty()) {
                         editText.setError("Please enter you number");
                     } else {
                         MyKey savedKey = null;
@@ -156,8 +160,10 @@ public class MainActivity extends AppCompatActivity {
                     finish();
                     Intent i = new Intent(context, MessagesActivity.class);
                     context.startActivity(i);
-                } else
+                } else {
                     Toast.makeText(context, " Request post fail -- Public Key -- ", Toast.LENGTH_LONG).show();
+                    restartAct();
+                }
             }
 
             @Override
@@ -165,8 +171,15 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(context, " Failed to post public key make sure you are connected", Toast.LENGTH_LONG).show();
                 loginForm.setVisibility(View.VISIBLE);
                 pb.setVisibility(View.INVISIBLE);
+                restartAct();
             }
         });
+    }
+
+    private void restartAct() {
+        Intent intent = getIntent();
+        finish();
+        startActivity(intent);
     }
 
     private void savePreference(String myContact) {

@@ -28,6 +28,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 
 import javax.crypto.SecretKey;
 
@@ -58,22 +59,26 @@ public class LindAppUtils {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    Toast.makeText(context,"Public Key save ",Toast.LENGTH_LONG).show();
-                }else if(keyResponse.getCode() == 404){
-                    Toast.makeText(context,contact+" doesn't post is Public Key ",Toast.LENGTH_LONG).show();
+                    Toast.makeText(context, "Public Key save ", Toast.LENGTH_LONG).show();
+                } else if (keyResponse.getCode() == 404) {
+                    Toast.makeText(context, contact + " doesn't post is Public Key ", Toast.LENGTH_LONG).show();
                 }
             }
 
             @Override
             public void onFailure(Call<PublicKeyResponse> call, Throwable t) {
 
-                Toast.makeText(context,"Network issue try again later ",Toast.LENGTH_LONG).show();
+                Toast.makeText(context, "Network issue try again later ", Toast.LENGTH_LONG).show();
             }
         });
 
     }
 
     public static void sendCypherMessage(final Context context, String plainText, String destiNumber) throws IOException {
+
+        byte[] iv = new SecureRandom().generateSeed(16);
+        String bytesToHex = EEC.bytesToHex(iv);
+
         LindAppDbHelper lindAppDbHelper = LindAppDbHelper.getInstance(context);
 
         String phoneNumber = getCleanAdress(destiNumber);
@@ -88,7 +93,9 @@ public class LindAppUtils {
                 PrivateKey privateKey = lindAppDbHelper.getPrivateKey(myNumber);
                 SecretKey secretKey = EEC.secretKey(privateKey, publicKey);
 
-                String cypherText = EEC.crypt(secretKey, plainText);
+                String cypherText = EEC.crypt(secretKey, plainText, iv);
+                String cypherTextIV = bytesToHex + "" + cypherText;
+
                 String SENT = "SMS_SENT";
                 String DELIVERED = "SMS_DELIVERED";
 
@@ -141,9 +148,9 @@ public class LindAppUtils {
                  *
                  */
                 SmsManager sms = SmsManager.getDefault();
-                sms.sendTextMessage(phoneNumber, null, cypherText, sentPI, deliveredPI);
+                sms.sendTextMessage(phoneNumber, null, cypherTextIV, sentPI, deliveredPI);
             } else
-                readPublicKey(lindAppDbHelper, phoneNumber,context);
+                readPublicKey(lindAppDbHelper, phoneNumber, context);
         }
     }
 
@@ -178,6 +185,11 @@ public class LindAppUtils {
 
     public static String decryptCypherText(Context context, String msg, String from) throws IOException {
 
+        String bytesToHex = msg.substring(0, 32);
+        String fullMsg = msg.substring(32);
+
+        byte[] iv = EEC.hexToBytes(bytesToHex);
+
         LindAppDbHelper lindAppDbHelper = LindAppDbHelper.getInstance(context);
 
         String phoneNumber = getCleanAdress(from);
@@ -190,10 +202,10 @@ public class LindAppUtils {
             SecretKey secretKey = EEC.secretKey(privateKey, publicKey);
 
             assert secretKey != null;
-            String decrypt = EEC.decrypt(secretKey, msg);
-            return decrypt!=null?decrypt:"error decryption";
+            String decrypt = EEC.decrypt(secretKey, fullMsg, iv);
+            return decrypt != null ? decrypt : "error decryption";
         } else
-            readPublicKey(lindAppDbHelper, phoneNumber,context);
+            readPublicKey(lindAppDbHelper, phoneNumber, context);
         return "Error fetching public key try again";
     }
 

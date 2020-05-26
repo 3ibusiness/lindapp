@@ -3,8 +3,7 @@ package com.androidcorpo.lindapp.elipticurve;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -13,7 +12,6 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.SecureRandom;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -26,8 +24,6 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class EEC {
-
-    public static byte[] iv = new SecureRandom().generateSeed(16);
 
     // Génération de la paire de clés Privée + Publique
     public static KeyPair keyGeneration() {
@@ -66,11 +62,11 @@ public class EEC {
     }
 
     // Fonction de chiffrement
-    public static String crypt(SecretKey cleSecrete, String texteAchifrer) {
+    public static String crypt(SecretKey cleSecrete, String texteAchifrer, byte[] iv) {
         try {
             IvParameterSpec seed = new IvParameterSpec(iv);
             Cipher chiffreur = Cipher.getInstance("AES/GCM/NoPadding", new org.bouncycastle.jce.provider.BouncyCastleProvider());
-            byte[] texteAchifrerBytes = texteAchifrer.getBytes(Charset.forName("UTF-8"));
+            byte[] texteAchifrerBytes = texteAchifrer.getBytes(StandardCharsets.UTF_8);
             byte[] textChiffre;
 
             chiffreur.init(Cipher.ENCRYPT_MODE, cleSecrete, seed);
@@ -93,7 +89,7 @@ public class EEC {
         }
     }
 
-    public static String decrypt(SecretKey cleSecrete, String textChiffre) {
+    public static String decrypt(SecretKey cleSecrete, String textChiffre, byte[] iv) {
         try {
             Key cleDechiffrement = new SecretKeySpec(cleSecrete.getEncoded(), cleSecrete.getAlgorithm());
 
@@ -108,14 +104,13 @@ public class EEC {
 
             tailleDeChiffrement += chiffreur.doFinal(textClair, tailleDeChiffrement);
 
-            return new String(textClair, "UTF-8");
-
+            return new String(textClair, StandardCharsets.UTF_8);
 
         } catch (NoSuchAlgorithmException
                 | NoSuchPaddingException | InvalidKeyException
                 | InvalidAlgorithmParameterException
                 | IllegalBlockSizeException | BadPaddingException
-                | ShortBufferException | UnsupportedEncodingException e) {
+                | ShortBufferException e) {
             e.printStackTrace();
             return null;
         }
