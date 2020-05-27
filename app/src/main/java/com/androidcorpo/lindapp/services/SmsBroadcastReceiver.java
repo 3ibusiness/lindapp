@@ -27,6 +27,7 @@ public class SmsBroadcastReceiver extends BroadcastReceiver {
             String smsMessageStr = "";
             String smsBody = "";
             String address = "";
+            assert message != null;
             for (Object o : message) {
                 SmsMessage smsMessage = SmsMessage.createFromPdu((byte[]) o);
                 smsBody = smsMessage.getMessageBody();
